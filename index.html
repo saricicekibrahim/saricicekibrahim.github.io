@@ -1,0 +1,173 @@
+<html>
+
+<head>
+	<title>Image Location on Map</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css" />
+	<link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css" />
+	<script src="node_modules/leaflet/dist/leaflet.js"></script>
+	<script src="node_modules/dropzone/dist/dropzone.js"></script>
+	<script src="node_modules/exif-js/exif.js"></script>
+	<style>
+		html, body {
+			height: 100%;
+		}
+		#actions {
+			margin: 2em 0;
+		}
+
+		/* Mimic table appearance */
+		div.table {
+			display: table;
+		}
+		div.table .file-row {
+			display: table-row;
+		}
+		div.table .file-row > div {
+			display: table-cell;
+			vertical-align: top;
+			border-top: 1px solid #ddd;
+			padding: 8px;
+		}
+		div.table .file-row:nth-child(odd) {
+			background: #f9f9f9;
+		}
+	</style>
+</head>
+
+<body>
+	<nav class="navbar navbar-light bg-light" style="box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+		<a class="navbar-brand">Image Location On Map</a>
+	</nav>
+	<div id="dropzone" class="row" style="height: 92%;">
+		<div class="col-lg-7" id="map" style="box-shadow: 0 0 10px rgba(0,0,0,0.5); margin:10px 0 0 20px;"></div>
+		<div class="col-lg" style="overflow: auto; overflow-x: hidden;">
+			<div id="actions" class="row">
+				<div class="col-lg" style="position: fixed; z-index: 1030;">
+					<span class="btn btn-success fileinput-button dz-clickable">
+						<span>Add files or drag & drop</span>
+					</span>
+					<button type="reset" class="btn btn-warning cancel">
+						<span>Cancel</span>
+					</button>
+				</div>
+			</div>
+			<div id="previews">
+
+			</div>
+		</div>
+	</div>
+
+	<script>
+		var myDropzone = new Dropzone("div#dropzone", { // Make the whole body a dropzone
+			url: "/", // Set the url
+			autoQueue: false, // Make sure the files aren't queued until manually added
+			clickable: ".fileinput-button" // Define the element that should be used as click trigger to select files.
+		});
+
+		myDropzone.on("addedfile", function (file) {
+			// Hookup the start button
+			EXIF.getData(file, function () {
+				var coordinates = [];
+				var lat = EXIF.getTag(this, "GPSLatitude");
+				var lon = EXIF.getTag(this, "GPSLongitude");
+				if (lon !== "undefined" & lat !== "undefined") {
+					coordinates.push(lat[0].numerator / lat[0].denominator);
+					coordinates.push(lat[1].numerator / lat[1].denominator);
+					coordinates.push(lat[2].numerator / lat[2].denominator);
+					coordinates.push(EXIF.getTag(this, "GPSLatitudeRef"));
+					coordinates.push(lon[0].numerator / lon[0].denominator);
+					coordinates.push(lon[1].numerator / lon[1].denominator);
+					coordinates.push(lon[2].numerator / lon[2].denominator);
+					coordinates.push(EXIF.getTag(this, "GPSLongitudeRef"));
+
+					var lat = ConvertDMSToDD(coordinates[0], coordinates[1], coordinates[2], coordinates[3]);
+					var lng = ConvertDMSToDD(coordinates[4], coordinates[5], coordinates[6], coordinates[7]);
+
+					ParseDMS(lat, lng, file);
+
+					var reader = new FileReader();
+					reader.onload = function (event) {
+						var src = document.getElementById("previews");
+						var imageCard = "<br><div class='card' id='" + file.name + "'>" +
+							"<div class='row '>" +
+							"<div class='col-md-4'>" +
+							"<img src=" + event.target.result + " class='w-100'>" +
+							"</div>" +
+							"<div class='col-md-8 px-3'>" +
+							"<div class='card-block px-3'>" +
+							"<h4 class='card-title'>" + file.name + "</h4>" +
+							"<p>File Size: " + (file.size / 1024 / 1024).toFixed(1) + " MB</p>" +
+							"<p>Lat, Lon: " + lat.toFixed(5) + "," + lng.toFixed(5) + "</p>" +
+							"<a href='javascript:zoomAndPopup([" + lat + ", " + lng + "], \"" + file.name + "\");' class='btn btn-primary'>Location on Map</a>" +
+							"</div>" +
+							"</div>" +
+							"</div>" +
+							"</div>" +
+							"</div>";
+						src.insertAdjacentHTML('afterbegin', imageCard);
+					};
+					reader.readAsDataURL(file);
+				}else{
+					alert("No gps datas");
+				}
+			});
+			myDropzone.removeFile(file);
+		});
+
+		document.querySelector("#actions .cancel").onclick = function () {
+			layerGroup.clearLayers();
+			myDropzone.removeAllFiles(true);
+			map.setView([30, 0], 3);
+			var myNode = document.getElementById("previews");
+			while (myNode.firstChild) {
+				myNode.removeChild(myNode.firstChild);
+			}
+		};
+
+		var map = L.map('map').setView([30, 0], 3);
+
+		L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+			maxZoom: 22
+		}).addTo(map);
+		var layerGroup = L.geoJSON().addTo(map);
+
+		function ParseDMS(_lat, _lng, _file) {
+			var latLng = [_lat, _lng];
+			imageBounds = [latLng, [-35.8650, 154.2094]];
+			var newMarker = new L.CircleMarker(latLng, {
+				radius: 6,
+				color: getColor(),
+				opacity: 1,
+				fillOpacity: 0.7
+			});
+			newMarker.on('click', function (event) {
+				window.location.hash = '#' + _file.name;
+			});
+			newMarker.addTo(layerGroup);
+			newMarker.bindPopup(_file.name);
+			map.setView(latLng, 18);
+		}
+
+		function ConvertDMSToDD(degrees, minutes, seconds, direction) {
+			var dd = degrees + minutes / 60 + seconds / (60 * 60);
+
+			if (direction == "S" || direction == "W") {
+				dd = dd * -1;
+			} // Don't do anything for N or E
+			return dd;
+		}
+
+		let getColor = () => {
+			return 'rgb(' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ')';
+		}
+
+		let zoomAndPopup = (_latLng, _fileName) => {
+			L.popup().setLatLng(_latLng).setContent(_fileName).openOn(map);
+			map.panTo(_latLng);
+		}
+	</script>
+</body>
+
+</html>
