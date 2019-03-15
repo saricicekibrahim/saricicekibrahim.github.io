@@ -1,0 +1,215 @@
+<html>
+
+<head>
+	<title>Read TKVF</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css" />
+	<link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css" />
+	<script src="node_modules/leaflet/dist/leaflet.js"></script>
+	<script src="node_modules/dropzone/dist/dropzone.js"></script>
+	<script src="node_modules/exif-js/exif.js"></script>
+	<script src="jquery.min.js"></script>
+	<script src="popper.min.js"></script>
+	<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+	<style>
+		html, body {
+			height: 100%;
+		}
+		#actions {
+			margin: 2em 0;
+		}
+
+		/* Mimic table appearance */
+		div.table {
+			display: table;
+		}
+		div.table .file-row {
+			display: table-row;
+		}
+		div.table .file-row > div {
+			display: table-cell;
+			vertical-align: top;
+			border-top: 1px solid #ddd;
+			padding: 8px;
+		}
+		div.table .file-row:nth-child(odd) {
+			background: #f9f9f9;
+		}
+		.blinking {
+  			animation: fade 1s infinite alternate;
+		}
+	</style>
+</head>
+
+<body>
+	<nav class="navbar navbar-light bg-light" style="box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+		<a class="navbar-brand">Read TKVF</a>
+	</nav>
+	<div id="dropzone" class="row" style="height: 92%;">
+		<div class="col-lg-8" id="map" style="box-shadow: 0 0 10px rgba(0,0,0,0.5); margin:10px 0 0 20px;"></div>
+		<div class="col-lg" style="overflow: auto; overflow-x: hidden; height:100%">
+			<div id="actions" class="row">
+				<div class="col-lg" style="position: fixed; z-index: 1030;">
+					<span class="btn btn-success fileinput-button dz-clickable">
+						<span>Dosya Seç</span>
+					</span>
+					<button type="reset" class="btn btn-warning cancel">
+						<span>İptal</span>
+					</button>
+				</div>
+			</div>
+			<div id="previews">
+
+				<div class="container">
+					<br>
+					<!-- Nav pills -->
+					<ul class="nav nav-pills" role="tablist">
+						<li class="nav-item">
+							<a class="nav-link active" data-toggle="pill" href="#girdi">Girdi</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" data-toggle="pill" href="#cikti">Çıktı</a>
+						</li>
+					</ul>
+
+					<!-- Tab panes -->
+					<div class="tab-content">
+						<div id="girdi" class="container tab-pane active"><br>
+
+						</div>
+						<div id="cikti" class="container tab-pane fade"><br>
+
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<script>
+		let tempLayer, geojson;
+		var myDropzone = new Dropzone("div#dropzone", { // Make the whole body a dropzone
+			url: "/", // Set the url
+			autoQueue: false, // Make sure the files aren't queued until manually added
+			clickable: ".fileinput-button" // Define the element that should be used as click trigger to select files.
+		});
+
+		myDropzone.on("addedfile", function (file) {
+			// Hookup the start button
+			var reader = new FileReader();
+			reader.onload = function () {
+				try {
+					geojson = JSON.parse(reader.result);
+					addLayer(geojson);
+					var src = document.getElementById("girdi");
+
+					for (var i = 0; i < geojson.features.length; i++) {
+						src.insertAdjacentHTML('beforebegin', "<b><button type='button' class='btn btn-link' onclick='findById(" + geojson.features[i].id + ")'>id:</b>"
+							+ geojson.features[i].id + '</button><br>');
+						Object.keys(geojson.features[i].properties).map(function (key, index) {
+							src.insertAdjacentHTML('beforebegin', "<b>" + key + ":</b>" + geojson.features[i].properties[key] + '<br>');
+						});
+						src.insertAdjacentHTML('beforebegin', "-----<br>");
+					}
+				} catch (err) {
+					console.log(err);
+				}
+			}
+			reader.readAsText(file);
+			myDropzone.removeFile(file);
+		});
+
+		document.querySelector("#actions .cancel").onclick = function () {
+			tempLayer.clearLayers();
+			myDropzone.removeAllFiles(true);
+			map.setView([30, 0], 3);
+			var girdiNode = document.getElementById("girdi");
+			var ciktiNode = document.getElementById("cikti");
+			while (girdiNode.firstChild) {
+				girdiNode.removeChild(girdiNode.firstChild);
+			}
+			while (ciktiNode.firstChild) {
+				ciktiNode.removeChild(ciktiNode.firstChild);
+			}
+		};
+
+		let findById = (_id) => {
+			geojson.features.forEach(feature => {
+				if (feature.id == _id) {
+					showParcel(feature);
+				}
+			});
+		}
+
+		var map = L.map('map').setView([30, 0], 3);
+
+		L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+			maxZoom: 22
+		}).addTo(map);
+
+
+		let addLayer = (_geojson) => {
+			tempLayer =
+				L.geoJson(_geojson, {
+					style: function (feature) {
+						return {
+							opacity: 1,
+							fillOpacity: 0.1,
+							color: getColor()
+						}
+					},
+					onEachFeature: function (feature, layer) {
+						if (feature.properties) {
+							if (feature.properties) {
+								layer.bindPopup(Object.keys(feature.properties).map(function (k) {
+									return k + ": " + feature.properties[k];
+								}).join("<br />"), {
+										maxHeight: 200
+									});
+							}
+						}
+					}
+				});
+			tempLayer.addTo(map);
+			map.fitBounds(tempLayer.getBounds());
+		}
+
+		let showParcel = (_geojson) => {
+			tempLayer.clearLayers();
+			templayer = null;
+			tempLayer =
+				L.geoJson(_geojson, {
+					className: 'blinking',
+					style: function (feature) {
+						return {
+							opacity: 1,
+							fillOpacity: 0.1,
+							color: getColor()
+						}
+					},
+					onEachFeature: function (feature, layer) {
+						if (feature.properties) {
+							if (feature.properties) {
+								layer.bindPopup(Object.keys(feature.properties).map(function (k) {
+									return k + ": " + feature.properties[k];
+								}).join("<br />"), {
+										maxHeight: 200
+									});
+							}
+						}
+					}
+				});
+			tempLayer.addTo(map);
+			map.fitBounds(tempLayer.getBounds());
+		}
+
+		let getColor = (_geojson) => {
+			return 'rgb(' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ')';
+		}
+
+	</script>
+</body>
+
+</html>

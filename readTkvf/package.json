@@ -1,0 +1,17 @@
+{
+  "name": "readTkvf",
+  "version": "1.0.0",
+  "description": "drag&drop tkvf geojson on map",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "saricicekibrahim",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^4.2.1",
+    "dropzone": "^5.5.1",
+    "exif-js": "^2.3.0",
+    "leaflet": "^1.4.0"
+  }
+}
