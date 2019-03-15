@@ -36,9 +36,6 @@
 		div.table .file-row:nth-child(odd) {
 			background: #f9f9f9;
 		}
-		.blinking {
-  			animation: fade 1s infinite alternate;
-		}
 	</style>
 </head>
 
@@ -101,17 +98,24 @@
 			var reader = new FileReader();
 			reader.onload = function () {
 				try {
+					reset();
 					geojson = JSON.parse(reader.result);
 					addLayer(geojson);
-					var src = document.getElementById("girdi");
+					
 
 					for (var i = 0; i < geojson.features.length; i++) {
-						src.insertAdjacentHTML('beforebegin', "<b><button type='button' class='btn btn-link' onclick='findById(" + geojson.features[i].id + ")'>id:</b>"
+						if(geojson.features[i].girdi_cikti && geojson.features[i].girdi_cikti == 1){
+							var src = document.getElementById("cikti");
+						}else{
+							var src = document.getElementById("girdi");
+						}
+						src.insertAdjacentHTML('afterbegin',
+							"<b><button type='button' class='btn btn-link' onclick='findById(" + geojson.features[i].id + ")'>id:</b>"
 							+ geojson.features[i].id + '</button><br>');
 						Object.keys(geojson.features[i].properties).map(function (key, index) {
-							src.insertAdjacentHTML('beforebegin', "<b>" + key + ":</b>" + geojson.features[i].properties[key] + '<br>');
+							src.insertAdjacentHTML('afterbegin', "<b>" + key + ":</b>" + geojson.features[i].properties[key] + '<br>');
 						});
-						src.insertAdjacentHTML('beforebegin', "-----<br>");
+						src.insertAdjacentHTML('afterbegin', "-----<br>");
 					}
 				} catch (err) {
 					console.log(err);
@@ -122,18 +126,24 @@
 		});
 
 		document.querySelector("#actions .cancel").onclick = function () {
-			tempLayer.clearLayers();
-			myDropzone.removeAllFiles(true);
-			map.setView([30, 0], 3);
-			var girdiNode = document.getElementById("girdi");
-			var ciktiNode = document.getElementById("cikti");
-			while (girdiNode.firstChild) {
-				girdiNode.removeChild(girdiNode.firstChild);
-			}
-			while (ciktiNode.firstChild) {
-				ciktiNode.removeChild(ciktiNode.firstChild);
-			}
+			reset();
 		};
+
+		let reset = () => {
+			if (tempLayer) {
+				tempLayer.clearLayers();
+				myDropzone.removeAllFiles(true);
+				map.setView([30, 0], 3);
+				var girdiNode = document.getElementById("girdi");
+				var ciktiNode = document.getElementById("cikti");
+				while (girdiNode.firstChild) {
+					girdiNode.removeChild(girdiNode.firstChild);
+				}
+				while (ciktiNode.firstChild) {
+					ciktiNode.removeChild(ciktiNode.firstChild);
+				}
+			}
+		}
 
 		let findById = (_id) => {
 			geojson.features.forEach(feature => {
@@ -157,6 +167,7 @@
 						return {
 							opacity: 1,
 							fillOpacity: 0.1,
+							weight: 1,
 							color: getColor()
 						}
 					},
@@ -177,15 +188,15 @@
 		}
 
 		let showParcel = (_geojson) => {
-			tempLayer.clearLayers();
-			templayer = null;
+			//tempLayer.clearLayers();
+			//templayer = null;
 			tempLayer =
 				L.geoJson(_geojson, {
-					className: 'blinking',
 					style: function (feature) {
 						return {
 							opacity: 1,
-							fillOpacity: 0.1,
+							weight: 5,
+							fillOpacity: 0.5,
 							color: getColor()
 						}
 					},

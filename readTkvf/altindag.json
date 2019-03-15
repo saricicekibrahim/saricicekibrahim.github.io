@@ -1,0 +1,12 @@
+{
+"type": "FeatureCollection",
+"totalFeatures": 1143,
+"name": "altindag",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "girdi_cikti":1,"id": 1, "geometry_name": "the_geom", "properties": { "ada_parsel": "4507\/13", "ada_no": "4507", "parsel_no": "13", "aktif": 1, "mahalle_id": 8 }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 32.87336298, 39.95999461 ], [ 32.87329083, 39.95974878 ], [ 32.8730597, 39.95979763 ], [ 32.87314701, 39.96004076 ], [ 32.87336298, 39.95999461 ] ] ] ] } },
+{ "type": "Feature", "girdi_cikti":1,"id": 2, "geometry_name": "the_geom", "properties": {"ada_parsel": "4507\/11", "ada_no": "4507", "parsel_no": "11", "aktif": 1, "mahalle_id": 8 }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 32.87381399, 39.95992475 ], [ 32.87376771, 39.9596794 ], [ 32.87352184, 39.95971093 ], [ 32.87358356, 39.95995855 ], [ 32.87381399, 39.95992475 ] ] ] ] } },
+{ "type": "Feature", "girdi_cikti":1,"id": 3, "geometry_name": "the_geom", "properties": { "ada_parsel": "4507\/12", "ada_no": "4507", "parsel_no": "12", "aktif": 1, "mahalle_id": 8 }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 32.87358356, 39.95995855 ], [ 32.87352184, 39.95971093 ], [ 32.87329083, 39.95974878 ], [ 32.87336298, 39.95999461 ], [ 32.87358356, 39.95995855 ] ] ] ] } },
+{ "type": "Feature", "girdi_cikti":0, "id": 4, "properties": { "ada_parsel": "4507\/14", "ada_no": "4507", "parsel_no": "14", "aktif": 0 }, "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 32.87314701, 39.96004076 ], [ 32.87336298, 39.95999461 ], [ 32.87358356, 39.95995855 ], [ 32.87381399, 39.95992475 ], [ 32.87376771, 39.9596794 ], [ 32.87352184, 39.95971093 ], [ 32.87329083, 39.95974878 ], [ 32.8730597, 39.95979763 ], [ 32.87314701, 39.96004076 ] ] ] ] } }
+]
+}
