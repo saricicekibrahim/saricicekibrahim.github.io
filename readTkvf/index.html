@@ -13,9 +13,11 @@
 	<script src="popper.min.js"></script>
 	<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 	<style>
-		html, body {
+		html,
+		body {
 			height: 100%;
 		}
+
 		#actions {
 			margin: 2em 0;
 		}
@@ -24,15 +26,18 @@
 		div.table {
 			display: table;
 		}
+
 		div.table .file-row {
 			display: table-row;
 		}
-		div.table .file-row > div {
+
+		div.table .file-row>div {
 			display: table-cell;
 			vertical-align: top;
 			border-top: 1px solid #ddd;
 			padding: 8px;
 		}
+
 		div.table .file-row:nth-child(odd) {
 			background: #f9f9f9;
 		}
@@ -57,7 +62,6 @@
 				</div>
 			</div>
 			<div id="previews">
-
 				<div class="container">
 					<br>
 					<!-- Nav pills -->
@@ -80,8 +84,20 @@
 						</div>
 					</div>
 				</div>
-
 			</div>
+		</div>
+		<div class="col-lg" style="overflow: auto; overflow-x: hidden; height:100%">
+			<div id="actions" class="row">
+				<div class="col-lg" style="position: fixed; z-index: 1030;">
+					<span class="btn btn-success dz-clickable showFiles">
+						<span>Ek Dosyalar</span>
+					</span>
+				</div>
+				<div id="files" class="container tab-pane active"><br>
+
+				</div>
+			</div>
+
 		</div>
 	</div>
 
@@ -101,17 +117,17 @@
 					reset();
 					geojson = JSON.parse(reader.result);
 					addLayer(geojson);
-					
+
 
 					for (var i = 0; i < geojson.features.length; i++) {
-						if(geojson.features[i].girdi_cikti && geojson.features[i].girdi_cikti == 1){
+						if (geojson.features[i].girdi_cikti && geojson.features[i].girdi_cikti == 1) {
 							var src = document.getElementById("cikti");
-						}else{
+						} else {
 							var src = document.getElementById("girdi");
 						}
 						src.insertAdjacentHTML('afterbegin',
-							"<b><button type='button' class='btn btn-link' onclick='findById(" + geojson.features[i].id + ")'>id:</b>"
-							+ geojson.features[i].id + '</button><br>');
+							"<b><button type='button' class='btn btn-link' onclick='findById(" + geojson.features[i].id + ")'>"
+							+ 'göster</button><br>');
 						Object.keys(geojson.features[i].properties).map(function (key, index) {
 							src.insertAdjacentHTML('afterbegin', "<b>" + key + ":</b>" + geojson.features[i].properties[key] + '<br>');
 						});
@@ -127,6 +143,26 @@
 
 		document.querySelector("#actions .cancel").onclick = function () {
 			reset();
+		};
+
+		document.querySelector(".showFiles").onclick = function () {
+			var filesPanel = document.getElementById("files");
+			var card1 = "<br><br><br><div class='card'>" +
+						"<img class='card-img-top' src='https://docs.geoserver.org/stable/en/user/_images/point_simplepointwithstroke2.png' alt='Card image cap'>" +
+						"<div class='card-body'>" +
+							"<p class='card-text'>Yer kontrol noktası.</p>" +
+						"</div>" +
+						"</div>";
+			filesPanel.insertAdjacentHTML('afterbegin', card1);
+
+			var card2 = "<br><br><br><div class='card'>" +
+						"<img class='card-img-top' src='https://avatars1.githubusercontent.com/u/14041153?s=400&u=1cd06e75e068a44d2254942e49e494ec79202f85&v=4' alt='Card image cap'>" +
+						"<div class='card-body'>" +
+							"<p class='card-text'>Malik 1:<br>İbrahim Sarıçiçek</p>" +
+						"</div>" +
+						"</div>";
+			filesPanel.insertAdjacentHTML('afterbegin', card2);
+			
 		};
 
 		let reset = () => {
@@ -188,8 +224,8 @@
 		}
 
 		let showParcel = (_geojson) => {
-			//tempLayer.clearLayers();
-			//templayer = null;
+			tempLayer.clearLayers();
+			templayer = null;
 			tempLayer =
 				L.geoJson(_geojson, {
 					style: function (feature) {
