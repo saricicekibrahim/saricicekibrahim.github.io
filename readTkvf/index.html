@@ -172,11 +172,15 @@
 				map.setView([30, 0], 3);
 				var girdiNode = document.getElementById("girdi");
 				var ciktiNode = document.getElementById("cikti");
+				var filesNode = document.getElementById("files");
 				while (girdiNode.firstChild) {
 					girdiNode.removeChild(girdiNode.firstChild);
 				}
 				while (ciktiNode.firstChild) {
 					ciktiNode.removeChild(ciktiNode.firstChild);
+				}
+				while (filesNode.firstChild) {
+					filesNode.removeChild(filesNode.firstChild);
 				}
 			}
 		}
