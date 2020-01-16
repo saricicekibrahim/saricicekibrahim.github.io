@@ -228,8 +228,8 @@
 		}
 
 		let showParcel = (_geojson) => {
-			//tempLayer.clearLayers();
-			//templayer = null;
+			tempLayer.clearLayers();
+			templayer = null;
 			tempLayer =
 				L.geoJson(_geojson, {
 					style: function (feature) {
