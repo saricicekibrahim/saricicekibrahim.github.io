@@ -38,7 +38,7 @@
 
         <!-- Load Kepler.gl -->
         <script src="https://unpkg.com/kepler.gl@2.0.1/umd/keplergl.min.js" crossorigin></script>
-        <script src="_confirmed.js" crossorigin></script>
+        <script src="confirmed.js"></script>
 
         <style type="text/css">
           body {margin: 0; padding: 0; overflow: hidden;}
@@ -51,26 +51,6 @@
            **/
           const MAPBOX_TOKEN = 'pk.eyJ1IjoiaWJyYWhpbXNhcmljaWNlayIsImEiOiJjOTY5MzE2YzVkMmY4ZjkxNDZiOWNkMGQ4MDJiZTE3MCJ9.BnJGGOoXAdwicB9shSV_Qg';
           const WARNING_MESSAGE = 'Please Provide a Mapbox Token in order to use Kepler.gl. Edit this file and fill out MAPBOX_TOKEN with your access key';
-        </script>
-
-        <!-- GA: Delete this as you wish, However to pat ourselves on the back, we only track anonymous pageview to understand how many people are using kepler.gl. -->
-        <script>
-          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-          })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-          ga('create', 'UA-64694404-19', {
-            'storage': 'none',
-            'clientId': localStorage.getItem('ga:clientId')
-          });
-          ga(function(tracker) {
-              localStorage.setItem('ga:clientId', tracker.get('clientId'));
-          });
-          ga('set', 'checkProtocolTask', null); // Disable file protocol checking.
-          ga('set', 'checkStorageTask', null); // Disable cookie storage checking.
-          ga('set', 'historyImportTask', null); // Disable history checking (requires reading from cookies).
-          ga('set', 'page', 'keplergl-html');
-          ga('send', 'pageview');
         </script>
       </head>
       <body>
