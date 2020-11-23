@@ -117,11 +117,14 @@
                     })
             }
 
+            //var handler = 
             view.on("click", function (event) {
                 queryFeatureLayer(event.mapPoint, 150, "intersects");
             });
+
             let geom;
             function queryFeatureLayer(point, distance, spatialRelationship, sqlExpression) {
+                debugger
                 var query = {
                     geometry: point,
                     distance: distance,
@@ -135,36 +138,38 @@
                     const graphics = result.features;
                     const data = graphics.map(function (feature, i) {
                         let features = feature.attributes;
-                        geom = feature.geometry;
+                        if (features.OBJECTID) {
+                            geom = feature.geometry;
 
-                        query = {
-                            geometry: geom,
-                            outFields: ["*"]
-                        };
-                        const fragment = document.createDocumentFragment();
+                            query = {
+                                geometry: geom,
+                                outFields: ["*"]
+                            };
+                            const fragment = document.createDocumentFragment();
 
-                        featureLayerSenators
-                            .queryFeatures(query)
-                            .then(function (results) {
-                                var senatFeatures = results.features;
+                            featureLayerSenators
+                                .queryFeatures(query)
+                                .then(function (results) {
+                                    var senatFeatures = results.features;
 
-                                senatFeatures.forEach(function (result, index) {
-                                    const attributes = result.attributes;
-                                    const name = attributes.Name;
+                                    senatFeatures.forEach(function (result, index) {
+                                        const attributes = result.attributes;
+                                        const name = attributes.Name;
 
-                                    // Create a list zip codes in NY
-                                    const li = document.createElement("li");
-                                    li.classList.add("panel-result");
-                                    li.tabIndex = 0;
-                                    li.setAttribute("data-result-id", index);
-                                    li.textContent = name;
+                                        // Create a list zip codes in NY
+                                        const li = document.createElement("li");
+                                        li.classList.add("panel-result");
+                                        li.tabIndex = 0;
+                                        li.setAttribute("data-result-id", index);
+                                        li.textContent = name;
 
-                                    fragment.appendChild(li);
-                                });
-                                // Empty the current list
-                                listNode.innerHTML = "";
-                                listNode.appendChild(fragment);
-                            })
+                                        fragment.appendChild(li);
+                                    });
+                                    // Empty the current list
+                                    listNode.innerHTML = "";
+                                    listNode.appendChild(fragment);
+                                })
+                        }
                     });
                 });
             }
@@ -231,6 +236,7 @@
                     view.popup.close();
                     // ready to draw a polygon
                     sketchViewModel.create("polygon");
+                    //handler.remove();
                 });
 
                 // create a new sketch view model set its layer
