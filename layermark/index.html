@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>
+        IbrahimS LayerMark
+    </title>
+
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.17/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.17/"></script>
+
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/layers/FeatureLayer",
+            "esri/widgets/Search",
+            "esri/layers/GraphicsLayer",
+            "esri/widgets/Sketch/SketchViewModel"
+        ], function (Map, MapView, FeatureLayer, Search, GraphicsLayer, SketchViewModel) {
+            var map = new Map({
+                basemap: "dark-gray-vector"
+            });
+
+            let polygonGraphicsLayer, sketchViewModel;
+
+            const listNode = document.getElementById("right_panel");
+
+            var view = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: [-97, 38], // lon, lat
+                scale: 10000000
+            });
+
+            var featureLayerDistricts = new FeatureLayer({
+                url:
+                    "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/ACS_Marital_Status_Boundaries/FeatureServer/2",
+                popupTemplate: {
+                    // autocasts as new PopupTemplate()
+                    title: "{NAME} in {COUNTY}",
+                    content: [
+                        {
+                            type: "fields",
+                            fieldInfos: [
+                                {
+                                    fieldName: "B12001_calc_pctMarriedE",
+                                    label: "% Married",
+                                    format: {
+                                        places: 0,
+                                        digitSeparator: true
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+
+            });
+
+            map.add(featureLayerDistricts);
+
+            var featureLayerSenators = new FeatureLayer({
+                url:
+                    "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/US_Senators/FeatureServer/0",
+                popupTemplate: {
+                    // autocasts as new PopupTemplate()
+                    title:
+                        "<a href={Web_Page} target='_blank'> {Name}</a>, ({Party}-{State}) ",
+                    overwriteActions: true
+                }
+            });
+
+            map.add(featureLayerSenators);
+
+            function selectFeatures(geom) {
+                query = {
+                    geometry: geom,
+                    outFields: ["*"]
+                };
+                const fragment = document.createDocumentFragment();
+
+                featureLayerSenators
+                    .queryFeatures(query)
+                    .then(function (results) {
+                        var senatFeatures = results.features;
+
+                        senatFeatures.forEach(function (result, index) {
+                            const attributes = result.attributes;
+                            const name = attributes.Name;
+
+                            // Create a list zip codes in NY
+                            const li = document.createElement("li");
+                            li.classList.add("panel-result");
+                            li.tabIndex = 0;
+                            li.setAttribute("data-result-id", index);
+                            li.textContent = name;
+
+                            fragment.appendChild(li);
+                        });
+                        // Empty the current list
+                        listNode.innerHTML = "";
+                        listNode.appendChild(fragment);
+                    })
+            }
+
+            view.on("click", function (event) {
+                queryFeatureLayer(event.mapPoint, 150, "intersects");
+            });
+            let geom;
+            function queryFeatureLayer(point, distance, spatialRelationship, sqlExpression) {
+                var query = {
+                    geometry: point,
+                    distance: distance,
+                    spatialRelationship: spatialRelationship,
+                    outFields: ["*"],
+                    returnGeometry: true,
+                    where: sqlExpression
+                };
+                const fragment = document.createDocumentFragment();
+                featureLayerDistricts.queryFeatures(query).then(function (result) {
+                    const graphics = result.features;
+                    const data = graphics.map(function (feature, i) {
+                        let features = feature.attributes;
+                        geom = feature.geometry;
+
+                        query = {
+                            geometry: geom,
+                            outFields: ["*"]
+                        };
+                        const fragment = document.createDocumentFragment();
+
+                        featureLayerSenators
+                            .queryFeatures(query)
+                            .then(function (results) {
+                                var senatFeatures = results.features;
+
+                                senatFeatures.forEach(function (result, index) {
+                                    const attributes = result.attributes;
+                                    const name = attributes.Name;
+
+                                    // Create a list zip codes in NY
+                                    const li = document.createElement("li");
+                                    li.classList.add("panel-result");
+                                    li.tabIndex = 0;
+                                    li.setAttribute("data-result-id", index);
+                                    li.textContent = name;
+
+                                    fragment.appendChild(li);
+                                });
+                                // Empty the current list
+                                listNode.innerHTML = "";
+                                listNode.appendChild(fragment);
+                            })
+                    });
+                });
+            }
+
+            var searchWidget = new Search({
+                view: view,
+                allPlaceholder: "Marriage or Senator",
+                sources: [
+                    {
+                        layer: featureLayerDistricts,
+                        searchFields: ["NAME"],
+                        displayField: "NAME",
+                        exactMatch: false,
+                        outFields: ["NAME"],
+                        name: "Marriage by Census Tract",
+                        placeholder: "example: Census Tract 511"
+                    },
+                    {
+                        layer: featureLayerSenators,
+                        searchFields: ["Name", "Party"],
+                        suggestionTemplate: "{Name}, Party: {Party}",
+                        exactMatch: false,
+                        outFields: ["*"],
+                        placeholder: "example: Casey",
+                        name: "Senators",
+                        zoomScale: 500000,
+                        resultSymbol: {
+                            type: "picture-marker", // autocasts as new PictureMarkerSymbol()
+                            url:
+                                "https://developers.arcgis.com/javascript/latest/sample-code/widgets-search-multiplesource/live/images/senate.png",
+                            height: 36
+                        }
+                    }
+                ]
+            });
+
+            // Add the search widget to the top left corner of the view
+            view.ui.add(searchWidget, {
+                position: "top-right"
+            });
+
+            setUpSketchViewModel();
+            sketchViewModel.on("create", function (event) {
+                if (event.state === "complete") {
+                    // this polygon will be used to query features that intersect it
+                    polygonGraphicsLayer.remove(event.graphic);
+                    selectFeatures(event.graphic.geometry);
+                }
+            });
+
+            function setUpSketchViewModel() {
+                // polygonGraphicsLayer will be used by the sketchviewmodel
+                // show the polygon being drawn on the view
+                polygonGraphicsLayer = new GraphicsLayer();
+                map.add(polygonGraphicsLayer);
+
+                // add the select by polygon button the view
+                view.ui.add("select-by-polygon", "top-left");
+                const selectButton = document.getElementById("select-by-polygon");
+
+                // click event for the button
+                selectButton.addEventListener("click", function () {
+                    clearUpSelection();
+                    view.popup.close();
+                    // ready to draw a polygon
+                    sketchViewModel.create("polygon");
+                });
+
+                // create a new sketch view model set its layer
+                sketchViewModel = new SketchViewModel({
+                    view: view,
+                    layer: polygonGraphicsLayer,
+                    pointSymbol: {
+                        type: "simple-marker",
+                        color: [255, 255, 255, 0],
+                        size: "1px",
+                        outline: {
+                            color: "gray",
+                            width: 0
+                        }
+                    }
+                });
+            }
+
+            function clearUpSelection() {
+                view.graphics.removeAll();
+            }
+        });
+    </script>
+    <style>
+        html,
+        body,
+        #sceneDiv {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .panel-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .panel-side {
+            padding: 2px;
+            box-sizing: border-box;
+            width: 300px;
+            height: 40%;
+            position: absolute;
+            top: 70px;
+            right: 0;
+            color: #fff;
+            background-color: rgba(0, 0, 0, 0.6);
+            overflow: auto;
+            z-index: 60;
+        }
+
+        .panel-side h3 {
+            padding: 0 20px;
+            margin: 20px 0;
+        }
+
+        .panel-side ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .panel-side li {
+            list-style: none;
+            padding: 10px 20px;
+        }
+
+        .panel-result {
+            cursor: pointer;
+            margin: 2px 0;
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-result:hover,
+        .panel-result:focus {
+            color: orange;
+            background-color: rgba(0, 0, 0, 0.75);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="panel-container">
+        <div class="panel-side esri-widget">
+            <h3>Selected Senators</h3>
+            <ul id="right_panel">
+            </ul>
+        </div>
+        <div id="viewDiv"></div>
+        <div id="select-by-polygon" class="esri-widget esri-widget--button esri-widget esri-interactive"
+            title="Select features by polygon">
+            <span class="esri-icon-checkbox-unchecked"></span>
+        </div>
+    </div>
+</body>
+
+</html>
