@@ -8,17 +8,7 @@
         IbrahimS LayerMark
     </title>
 
-    <style>
-        html,
-        body,
-        #viewDiv {
-            padding: 0;
-            margin: 0;
-            height: 100%;
-            width: 100%;
-        }
-    </style>
-
+    <link rel="stylesheet" href="map.css">
     <link rel="stylesheet" href="https://js.arcgis.com/4.17/esri/themes/light/main.css" />
     <script src="https://js.arcgis.com/4.17/"></script>
 
@@ -29,21 +19,24 @@
             "esri/layers/FeatureLayer",
             "esri/widgets/Search",
             "esri/layers/GraphicsLayer",
-            "esri/widgets/Sketch/SketchViewModel"
-        ], function (Map, MapView, FeatureLayer, Search, GraphicsLayer, SketchViewModel) {
+            "esri/widgets/Sketch/SketchViewModel",
+            "esri/widgets/FeatureForm",
+            "esri/form/FormTemplate"
+        ], function (Map, MapView, FeatureLayer, Search, GraphicsLayer, SketchViewModel, FeatureForm, FormTemplate) {
             var map = new Map({
                 basemap: "dark-gray-vector"
             });
 
-            let polygonGraphicsLayer, sketchViewModel;
+            let polygonGraphicsLayer, sketchViewModel, highlight;
 
             const listNode = document.getElementById("right_panel");
+            const fragment = document.createDocumentFragment();
 
             var view = new MapView({
                 container: "viewDiv",
                 map: map,
                 center: [-97, 38], // lon, lat
-                scale: 10000000
+                scale: 100000
             });
 
             var featureLayerDistricts = new FeatureLayer({
@@ -67,6 +60,33 @@
                             ]
                         }
                     ]
+                },
+                formTemplate: {
+                    // Autocasts to new FormTemplate
+                    title: "Main Update Menu",
+                    description: "some description",
+                    elements: [
+                        {
+                            // Autocasts to new GroupElement
+                            type: "group",
+                            label: "Group Title",
+                            description: "some more description",
+                            elements: [
+                                {
+                                    // Autocasts to new FieldElement
+                                    type: "field",
+                                    fieldName: "NAME",
+                                    label: "NAME"
+                                }
+                            ]
+                        } // end of fourth group element
+                    ],
+                    expressionInfos: [
+                        {
+                            name: "alwaysHidden",
+                            expression: "1 == 0"
+                        }
+                    ]
                 }
 
             });
@@ -86,20 +106,112 @@
 
             map.add(featureLayerSenators);
 
+            const form = new FeatureForm({
+                container: "form",
+                groupDisplay: "sequential", // only display one group at a time
+                layer: featureLayerDistricts
+            });
+
             function selectFeatures(geom) {
                 query = {
                     geometry: geom,
                     outFields: ["*"]
                 };
-                const fragment = document.createDocumentFragment();
 
+                getPointsAndFillList(query);
+            }
+
+            // Function to unselect features
+            function unselectFeature() {
+                if (highlight) {
+                    highlight.remove();
+                }
+            }
+
+            //var handler = 
+            view.on("click", function (event) {
+                if (sketchViewModel.state === "active") {
+                    return;
+                }
+                // Unselect any currently selected features
+                unselectFeature();
+                // Listen for when the user clicks on the view
+                view.hitTest(event).then(function (response) {
+                    // If user selects a feature, select it
+                    const results = response.results;
+                    if (
+                        results.length > 0 &&
+                        results[0].graphic &&
+                        results[0].graphic.layer === featureLayerDistricts
+                    ) {
+                        popupToUpdate(
+                            results[0].graphic.attributes[featureLayerDistricts.objectIdField]
+                        );
+                    } else {
+                        // Hide the form and show the info div
+                        document.getElementById("update").classList.add("esri-hidden");
+                    }
+                });
+
+                queryClickedLayer(event.mapPoint, 150, "intersects");
+            });
+
+            function popupToUpdate(objectId) {
+                // query feature from the server
+                featureLayerDistricts
+                    .queryFeatures({
+                        objectIds: [objectId],
+                        outFields: ["*"],
+                        returnGeometry: true
+                    })
+                    .then(function (results) {
+                        if (results.features.length > 0) {
+
+                            editFeature = results.features[0];
+                            // display the attributes of selected feature in the form
+                            form.feature = editFeature;
+
+                            // highlight the feature on the view
+                            view
+                                .whenLayerView(editFeature.layer)
+                                .then(function (layerView) {
+                                    highlight = layerView.highlight(editFeature);
+                                });
+
+                            if (
+                                document
+                                    .getElementById("update")
+                                    .classList.contains("esri-hidden")
+                            ) {
+
+                                document
+                                    .getElementById("update")
+                                    .classList.remove("esri-hidden");
+                            }
+                        }
+                    });
+            }
+
+            function getPointsAndFillList(_query) {
                 featureLayerSenators
-                    .queryFeatures(query)
+                    .queryFeatures(_query)
                     .then(function (results) {
                         var senatFeatures = results.features;
+                        var keys = []; 
+                        let valuesArr = [];
+                        for (var key in senatFeatures[0].attributes) {
+                            keys.push(key);
+                        }
 
+                        valuesArr.push(keys);
                         senatFeatures.forEach(function (result, index) {
                             const attributes = result.attributes;
+                            let values = [];
+                            for (var key in attributes) {
+                                values.push(attributes[key]);
+                            }
+                            valuesArr.push(values);
+
                             const name = attributes.Name;
 
                             // Create a list zip codes in NY
@@ -111,20 +223,26 @@
 
                             fragment.appendChild(li);
                         });
+                        let csvContent = "data:text/csv;charset=utf-8,"
+                            + valuesArr.map(e => e.join(";")).join("\n");
+
                         // Empty the current list
                         listNode.innerHTML = "";
                         listNode.appendChild(fragment);
+
+                        var encodedUri = encodeURI(csvContent);
+                        var link = document.createElement("a");
+                        link.setAttribute("href", encodedUri);
+                        link.setAttribute("download", "my_data.csv");
+                        document.body.appendChild(link); // Required for FF
+
+                        link.click(); // This will download the data file named "my_data.csv".
+
                     })
             }
 
-            //var handler = 
-            view.on("click", function (event) {
-                queryFeatureLayer(event.mapPoint, 150, "intersects");
-            });
-
             let geom;
-            function queryFeatureLayer(point, distance, spatialRelationship, sqlExpression) {
-                debugger
+            function queryClickedLayer(point, distance, spatialRelationship, sqlExpression) {
                 var query = {
                     geometry: point,
                     distance: distance,
@@ -147,28 +265,7 @@
                             };
                             const fragment = document.createDocumentFragment();
 
-                            featureLayerSenators
-                                .queryFeatures(query)
-                                .then(function (results) {
-                                    var senatFeatures = results.features;
-
-                                    senatFeatures.forEach(function (result, index) {
-                                        const attributes = result.attributes;
-                                        const name = attributes.Name;
-
-                                        // Create a list zip codes in NY
-                                        const li = document.createElement("li");
-                                        li.classList.add("panel-result");
-                                        li.tabIndex = 0;
-                                        li.setAttribute("data-result-id", index);
-                                        li.textContent = name;
-
-                                        fragment.appendChild(li);
-                                    });
-                                    // Empty the current list
-                                    listNode.innerHTML = "";
-                                    listNode.appendChild(fragment);
-                                })
+                            getPointsAndFillList(query);
                         }
                     });
                 });
@@ -258,66 +355,15 @@
             function clearUpSelection() {
                 view.graphics.removeAll();
             }
+
+            document.getElementById("btnUpdate").onclick = function () {
+                // Fires feature form's submit event.
+
+            };
+
+            view.ui.add("update", "bottom-left");
         });
     </script>
-    <style>
-        html,
-        body,
-        #sceneDiv {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        .panel-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
-        .panel-side {
-            padding: 2px;
-            box-sizing: border-box;
-            width: 300px;
-            height: 40%;
-            position: absolute;
-            top: 70px;
-            right: 0;
-            color: #fff;
-            background-color: rgba(0, 0, 0, 0.6);
-            overflow: auto;
-            z-index: 60;
-        }
-
-        .panel-side h3 {
-            padding: 0 20px;
-            margin: 20px 0;
-        }
-
-        .panel-side ul {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .panel-side li {
-            list-style: none;
-            padding: 10px 20px;
-        }
-
-        .panel-result {
-            cursor: pointer;
-            margin: 2px 0;
-            background-color: rgba(0, 0, 0, 0.3);
-        }
-
-        .panel-result:hover,
-        .panel-result:focus {
-            color: orange;
-            background-color: rgba(0, 0, 0, 0.75);
-        }
-    </style>
 </head>
 
 <body>
@@ -331,6 +377,10 @@
         <div id="select-by-polygon" class="esri-widget esri-widget--button esri-widget esri-interactive"
             title="Select features by polygon">
             <span class="esri-icon-checkbox-unchecked"></span>
+        </div>
+        <div id="update" class="esri-widget esri-hidden">
+            <div id="form" class="scroller esri-component"></div>
+            <input type="button" class="esri-button" value="Update assessment" id="btnUpdate" />
         </div>
     </div>
 </body>
