@@ -1,0 +1,68 @@
+html, body, #viewDiv {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+}
+
+.panel-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.panel-side {
+    padding: 2px;
+    box-sizing: border-box;
+    width: 300px;
+    height: 40%;
+    position: absolute;
+    top: 70px;
+    right: 0;
+    color: rgb(167, 152, 152) !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    overflow: auto;
+    z-index: 60;
+}
+
+.panel-side h3 {
+    padding: 0 20px;
+    margin: 20px 0;
+}
+
+.panel-side ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.panel-side li {
+    list-style: none;
+    padding: 10px 20px;
+}
+
+.panel-result {
+    cursor: pointer;
+    margin: 2px 0;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.panel-result:hover, .panel-result:focus {
+    color: orange;
+    background-color: rgba(0, 0, 0, 0.75);
+}
+
+#update {
+    padding: 6px;
+}
+
+#form {
+    background: #fff;
+}
+
+/* replaces esri-widget--panel */
+
+.scroller {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
