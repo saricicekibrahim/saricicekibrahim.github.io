@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>#30DayMapChallange Kontur - 2021 Turkey Wildfire</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <link href='https://fonts.googleapis.com/css?family=Orbitron' rel='stylesheet' type='text/css'>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        #info {
+            display: block;
+            position: relative;
+            margin: 0px auto;
+            width: 15%;
+            padding: 10px;
+            font-size: 20px;
+            text-align: center;
+            color: white;
+            background: black;
+            font-family: 'Orbitron';
+            top: 5px !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <pre id="info">27/07/2021</pre>
+    <script>
+        var map = new maplibregl.Map({
+            container: 'map',
+            style:
+                'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=kHUnlOrFQWJix6vI46Hj',
+            maxZoom: 9,
+            minZoom: 4,
+            zoom: 7,
+            center: [30.665575, 36.198192],
+            maxBounds: [
+                [22, 32.5],
+                [40, 41],
+            ],
+            pitch: 45
+        });
+
+        var frameCount = 11;
+        var currentImage = 0;
+        let dates = ["27/07/2021", "28/07/2021", "29/07/2021", "30/07/2021",
+            "31/07/2021", "01/08/2021", "02/08/2021", "03/08/2021", "04/08/2021",
+            "05/08/2021", "06/08/2021"]
+
+        function getPath() {
+            document.getElementById('info').innerHTML = dates[currentImage];
+            return (
+                './wildfire_images/' +
+                currentImage +
+                '.jpeg'
+            );
+        }
+
+        map.on('load', function () {
+            map.addSource('wildfire', {
+                type: 'image',
+                url: getPath(),
+                coordinates: [
+                    [25.065651, 39.0692],
+                    [36.816559, 39.0692],
+                    [36.816559, 34.564],
+                    [25.065651, 34.564]
+
+                ]
+            });
+            map.addLayer({
+                id: 'wildfire-layer',
+                'type': 'raster',
+                'source': 'wildfire',
+                'paint': {
+                    'raster-fade-duration': 0
+                }
+            });
+
+            map.setPaintProperty(
+                'wildfire-layer',
+                'raster-opacity',
+                0.9
+            );
+
+            setInterval(function () {
+                currentImage = (currentImage + 1) % frameCount;
+                map.getSource('wildfire').updateImage({ url: getPath() });
+            }, 1500);
+        });
+    </script>
+</body>
+
+</html>
