@@ -35,19 +35,28 @@
             top: 5px !important;
         }
 
-        #logo {
-            position: absolute;
-            bottom: 10px;
-            left: 0;
-            width: 250px;
+        @media (max-width : 300px) {
+            #logo {
+                position: absolute;
+                bottom: 10px;
+                left: 0;
+                width: 30%;
+            }
         }
+
+        #logo {
+                position: absolute;
+                bottom: 10px;
+                left: 0;
+                width: 15%;
+            }
     </style>
 </head>
 
 <body>
     <div id="map"></div>
     <pre id="info">27/07/2021</pre>
-    <img id="logo" src="logo.png">
+    <a href="https://kontur.io" target="_blank"><img id="logo" src="logo.png" /></a>
     <script src="map.js"></script>
 </body>
 
