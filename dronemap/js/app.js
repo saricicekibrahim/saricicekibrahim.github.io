@@ -61,9 +61,7 @@ var app = angular.module('droneApp', []).controller('droneCtrl', ['$scope', '$ht
           ]),
 		target : 'map',
 		layers : [new ol.layer.Tile({
-            source: new ol.source.Stamen({
-                layer: 'terrain'
-              })
+            source: new ol.source.OSM()
             })],
 		view : $scope.view,
 		overlays: [overlay]
