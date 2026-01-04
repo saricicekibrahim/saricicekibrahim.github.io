@@ -1,0 +1,3 @@
+tippecanoe -o /Users/saricicek/Downloads/hex10.mbtiles --no-tile-compression /Users/saricicek/Downloads/hex10.geojson
+cd /Users/saricicek/Library/Python/3.9/bin
+./mb-util --image_format=pbf /Users/saricicek/Downloads/hex10.mbtiles /Users/saricicek/Downloads/tiles/

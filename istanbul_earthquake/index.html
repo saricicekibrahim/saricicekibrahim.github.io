@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>MapLibre - OSM + Vector Tiles</title>
+  <title>Thesis MAP</title>
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
   <style>
@@ -31,7 +31,7 @@
         mytiles: {
           type: "vector",
           tiles: [
-            "http://localhost:8000/{z}/{x}/{y}.pbf"
+            "{z}/{x}/{y}.pbf"
           ],
           minzoom: 0,
           maxzoom: 14
